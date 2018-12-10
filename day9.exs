@@ -2,6 +2,26 @@ num_players = 10 # 404
 last_marble_points = 1618 # 71852
 players = 1..num_players |> Map.new(& {&1, 0})
 
+next = fn
+  {[], current, [] } ->
+    {[], current, [] }
+  {left, current, []} ->
+    right = Enum.reverse([current | left])
+    {[], hd(right), tl(right)}
+  {left, current, right} ->
+    {[current | left], hd(right), tl(right)}
+end
+
+previous = fn
+  {[], current, right} ->
+    left = Enum.reverse([current | next])
+    {tl(left), hd(left, [])}
+  {left, current, right} ->
+    {tl(left), hd(left), [current | next]}
+end
+
+
+
 place_marble = fn
   to_place, state when rem(to_place, 23) == 0 ->
     length = Enum.count(state[:board])
