@@ -26,8 +26,7 @@ part2 = fn ->
   |> Enum.with_index(1)
   |> Enum.flat_map(fn {str, idx} -> Enum.drop(data, idx) |> Enum.map(& similar_chars.(str, &1)) end)
   |> Enum.sort_by(&String.length/1)
-  |> Enum.reverse()
-  |> hd()
+  |> List.last()
 end
 
 IO.puts "Part 1: #{part1.()}"

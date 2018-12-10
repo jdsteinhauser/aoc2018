@@ -1,7 +1,4 @@
-elements = "day1.txt"
-  |> File.stream!()
-  |> Enum.map(&Integer.parse(&1))
-  |> Enum.map(&elem(&1, 0))
+elements = Enum.map(File.stream!("day1.txt"), & (Integer.parse(&1) |> elem(0)))
 
 part1 = Enum.sum(elements)
 
