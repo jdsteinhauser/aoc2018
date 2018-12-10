@@ -1,6 +1,5 @@
-num_players = 10 # 404
-last_marble_points = 1618 # 71852
-players = 1..num_players |> Map.new(& {&1, 0})
+num_players = 404
+last_marble_points = 71852
 
 next = fn
   {[], current, [] } ->
@@ -14,44 +13,46 @@ end
 
 previous = fn
   {[], current, right} ->
-    left = Enum.reverse([current | next])
-    {tl(left), hd(left, [])}
+    left = Enum.reverse([current | right])
+    {tl(left), hd(left), []}
   {left, current, right} ->
-    {tl(left), hd(left), [current | next]}
+    {tl(left), hd(left), [current | right]}
 end
 
+add_marble = fn x, marbles ->
+  {left, current, right} = next.(marbles)
+  {[current | left], x, right}
+end  
 
+remove_marble = fn marbles ->
+  { left, current, right } = 
+    Enum.reduce(1..7, marbles, fn _, ms -> previous.(ms) end)
+  {current, {left, hd(right), tl(right) }}
+end
 
-place_marble = fn
-  to_place, state when rem(to_place, 23) == 0 ->
-    length = Enum.count(state[:board])
-    new_current = rem(state[:current_pos] - 7 + length, length)
-    {removed, new_board} = List.pop_at(state[:board], new_current)
-    player = rem(to_place - 1, num_players) + 1
-    IO.puts "@#{to_place}: #{removed + to_place} points scored by Player #{player}"
-    state
-    |> Map.replace!(:current_pos, new_current)
-    |> Map.replace!(:board, new_board)
-    |> Map.replace!(:points, removed + to_place)
-    |> Map.update!(:players, fn old -> Map.update!(old, player, & &1 + removed + to_place) end)
-  to_place, state ->
-    new_pos = rem(state[:current_pos] + 1, Enum.count state[:board]) + 1
-    state
-    |> Map.replace!(:current_pos, new_pos)
-    |> Map.update!(:board, & List.insert_at(&1, new_pos, to_place))
-    |> Map.replace!(:points, 0)
+place_marble = fn 
+  x, %{:marbles => marbles, :players => players} when rem(x, 23) == 0 -> 
+    {removed, new_marbles} = remove_marble.(marbles)
+    points = x + removed
+    # IO.puts "@#{x}, removed #{removed} for #{points} points"
+    %{points: removed, marbles: new_marbles, players: Map.update(players, rem(x - 1, num_players) + 1, points, & &1 + points)}
+  x, %{:marbles => marbles, :players => players} ->
+    %{points: 0, marbles: add_marble.(x, marbles), players: players}
 end
 
 part1 = fn ->
   final_state =
-    Stream.interval(1)
-    |> Stream.drop(1)
-    |> Enum.reduce_while(%{current_pos: 0, board: [0], points: 0, players: players}, 
-                        fn n, acc -> 
-                          state = place_marble.(n, acc)
-                          if state[:points] == last_marble_points, do: {:halt, state}, else: {:cont, state}
-                        end)
+    1..last_marble_points
+    |> Enum.reduce(%{marbles: {[], 0, []}, players: %{}}, fn n, acc -> place_marble.(n, acc) end)
   Enum.max_by(final_state[:players], fn {_k, v} -> v end)
 end
 
-IO.puts "Part 1: #{IO.inspect(part1.())}"
+part2 = fn ->
+  final_state =
+    1..last_marble_points * 100
+    |> Enum.reduce(%{marbles: {[], 0, []}, players: %{}}, fn n, acc -> place_marble.(n, acc) end)
+  Enum.max_by(final_state[:players], fn {_k, v} -> v end)
+end
+
+IO.puts "Part 1: #{elem(part1.(), 1)}"
+IO.puts "Part 2: #{elem(part2.(), 1)}"
