@@ -6,8 +6,6 @@ parse_point = fn line ->
   %{pos: {x, y}, vel: {vx, vy}}
 end
 
-manhattan = fn {x1, y1}, {x2, y2} -> abs(x2 - x1) + abs(y2 - y1) end
-
 points = Enum.map(File.stream!("day10.txt"), parse_point)
 
 propagate = fn %{:pos => {x, y}, :vel => {vx, vy}} -> %{pos: { x + vx, y + vy }, vel: { vx, vy }} end
@@ -24,16 +22,19 @@ print_points = fn points ->
 end
 
 score = fn points ->
-  count = Enum.count(points)
-  dists = for a <- 0 .. count - 2, b <- a + 1 .. count - 1, do: manhattan.(Enum.at(points, a)[:pos], Enum.at(points, b)[:pos])
-  Enum.sum(dists)
+  {xmin, xmax} = Enum.map(points, fn %{:pos => {x, _}} -> x end) |> Enum.min_max()
+  {ymin, ymax} = Enum.map(points, fn %{:pos => {_, y}} -> y end) |> Enum.min_max()
+  (xmax - xmin) * (ymax - ymin)
 end
 
-part1 = fn ->
+find_msg = fn ->
   Stream.iterate(points, & Enum.map(&1,propagate))
-  |> Enum.reduce_while({score.(points), points}, fn x, {min_so_far, best} -> 
+  |> Stream.drop(1)
+  |> Enum.reduce_while({0, score.(points), points}, fn x, {iter, min_so_far, best} -> 
       current_score = score.(x)
-      if current_score <= min_so_far, do: {:cont, {current_score, x}}, else: {:halt, best} end)
+      if current_score <= min_so_far, do: {:cont, {iter + 1, current_score, x}}, else: {:halt, {iter, best}} end)
 end
 
-IO.puts "#{print_points.(part1.())}"
+{time, points} = find_msg.()
+IO.puts "Part 1:\n#{print_points.(points)}"
+IO.puts "Part 2: #{time} seconds"
