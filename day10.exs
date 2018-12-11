@@ -26,13 +26,14 @@ end
 score = fn points ->
   count = Enum.count(points)
   dists = for a <- 0 .. count - 2, b <- a + 1 .. count - 1, do: manhattan.(Enum.at(points, a)[:pos], Enum.at(points, b)[:pos])
-  IO.puts Enum.sum(dists)
+  Enum.sum(dists)
 end
 
 part1 = fn ->
-  states = Enum.scan(1..5, points, fn _, pts -> Enum.map(pts, propagate) end)
-  Enum.each(states, score)
-  List.last(states)
+  Stream.iterate(points, & Enum.map(&1,propagate))
+  |> Enum.reduce_while({score.(points), points}, fn x, {min_so_far, best} -> 
+      current_score = score.(x)
+      if current_score <= min_so_far, do: {:cont, {current_score, x}}, else: {:halt, best} end)
 end
 
 IO.puts "#{print_points.(part1.())}"
