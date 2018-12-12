@@ -20,14 +20,29 @@ next_gen = fn gen ->
   |> Enum.map(& Map.fetch!(transforms, &1))
 end
 
-nth_gen_index_sum = fn n ->
-  Stream.iterate(init_state, next_gen)
-    |> Enum.at(n)
-    |> Enum.with_index(n * -2)
-    |> Enum.filter(fn {x, _idx} -> x == '#' end)
-    |> Enum.map(& elem(&1, 1))
-    |> Enum.sum()
+gen_stream = Stream.iterate(init_state, next_gen) |> Stream.with_index()
+
+
+pot_sum = fn {pots, idx} -> 
+  pots
+  |> Enum.with_index(idx * -2)
+  |> Enum.filter(fn {x, _idx} -> x == '#' end)
+  |> Enum.map(& elem(&1, 1))
+  |> Enum.sum()
 end
 
-IO.puts "Part 1: #{nth_gen_index_sum.(20)}"
-IO.puts "Part 2: #{nth_gen_index_sum.(50_000_000_000)}"
+part1 =
+  gen_stream
+  |> Enum.at(20)
+  |> pot_sum.()
+
+part2 = fn -> 
+  gen_stream
+  |> Stream.map(pot_sum)
+  |> Stream.scan(0, fun {x, i} ->  end)
+  |> Enum.take(200)
+  |> Enum.each(&IO.puts/1)  
+end
+
+IO.puts "Part 1: #{part1}"
+part2.()
