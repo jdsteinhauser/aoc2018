@@ -16,8 +16,7 @@ largest_segment = fn grid, size ->
     value = grid |> Enum.slice(x-1, size) |> Enum.flat_map(fn ys -> Enum.slice(ys, y-1, size) end) |> Enum.sum()
     {x, y, size, value}
   end
-  |> Enum.sort_by(fn {_,_,_,value} -> value * -1 end)
-  |> List.first()
+  |> Enum.max_by(fn {_,_,_,value} -> value end)
 end
 
 IO.puts "Part 1: #{largest_segment.(grid, 3)}"
@@ -25,7 +24,6 @@ IO.puts "Part 1: #{largest_segment.(grid, 3)}"
 part2 = 
   1..300
   |> Enum.map(fn size -> largest_segment.(grid, size) end)
-  |> Enum.sort_by(fn {_,_,_,value} -> value * -1 end)
-  |> List.first()
+  |> Enum.max_by(fn {_,_,_,value} -> value end)
 
 IO.puts "Part 2: #{part2}"
