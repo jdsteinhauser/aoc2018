@@ -1,0 +1,33 @@
+lines = File.stream!("day12.txt")
+
+init_state = 
+  lines
+  |> Enum.at(0)
+  |> String.trim()
+  |> String.to_charlist()
+  |> Enum.drop(15)
+
+transforms = 
+  lines
+  |> Enum.drop(2)
+  |> Enum.map(& String.split(&1, ~r/[ =>\n]/, trim: true))
+  |> Map.new(fn [k,v] -> { k, String.to_charlist(v) } end)
+
+next_gen = fn gen ->
+  '....' ++ gen ++ '....'
+  |> Enum.chunk_every(5, 1, :discard)
+  |> Enum.map(&to_string/1)
+  |> Enum.map(& Map.fetch!(transforms, &1))
+end
+
+nth_gen_index_sum = fn n ->
+  Stream.iterate(init_state, next_gen)
+    |> Enum.at(n)
+    |> Enum.with_index(n * -2)
+    |> Enum.filter(fn {x, _idx} -> x == '#' end)
+    |> Enum.map(& elem(&1, 1))
+    |> Enum.sum()
+end
+
+IO.puts "Part 1: #{nth_gen_index_sum.(20)}"
+IO.puts "Part 2: #{nth_gen_index_sum.(50_000_000_000)}"
