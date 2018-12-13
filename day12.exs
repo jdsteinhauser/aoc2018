@@ -37,12 +37,14 @@ part1 =
   |> pot_sum.()
 
 part2 = fn -> 
-  gen_stream
-  |> Stream.map(pot_sum)
-  |> Stream.scan(0, fun {x, i} ->  end)
-  |> Enum.take(200)
-  |> Enum.each(&IO.puts/1)  
+  # Assuming convergence on increase around 200 generations
+  [x198, x199] =
+    gen_stream
+    |> Stream.map(pot_sum)
+    |> Stream.chunk_every(2, 1, :discard)
+    |> Enum.at(200)
+  x199 + (50_000_000_000 - 201) * (x199 - x198)
 end
 
 IO.puts "Part 1: #{part1}"
-part2.()
+IO.puts "Part 2: #{part2.()}"
